@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WebSocket 测试 - qwen-turbo</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system; margin: 24px; max-width: 800px; }
+    .row { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 500; }
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    button {
+      padding: 10px 16px; background: #0078d4; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 8px;
+      font-size: 14px;
+    }
+    button:disabled { background: #cccccc; cursor: not-allowed; }
+    pre {
+      background: #f5f5f5; border: 1px solid #e0e0e0; padding: 12px; border-radius: 6px;
+      min-height: 60px; white-space: pre-wrap; font-family: inherit; margin: 0; color: #333;
+    }
+    .log { color: #666; font-size: 12px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h2>💬 WebSocket 与 Qwen 对话测试</h2>
+
+  <div class="row">
+    <label>WebSocket 地址</label>
+    <input id="wsUrl" value="ws://127.0.0.1:8000/ws/chat" placeholder="ws://your-server/ws/chat" />
+  </div>
+
+  <div class="row">
+    <label>提示词 (Prompt)</label>
+    <textarea id="prompt" rows="3">用一句话解释 Transformer 是什么？</textarea>
+  </div>
+
+  <div class="row">
+    <label>模型名称</label>
+    <input id="model" value="qwen-turbo" />
+  </div>
+
+  <div class="row">
+    <label>温度 temperature (0~2)</label>
+    <input id="temperature" type="number" step="0.1" min="0" max="2" value="0.7" placeholder="0.7" />
+  </div>
+
+  <div class="row">
+    <button id="connectBtn">🔗 连接</button>
+    <button id="sendBtn" disabled>📤 发送</button>
+    <button id="closeBtn" disabled>❌ 断开</button>
+  </div>
+
+  <h3>输出</h3>
+  <pre id="output"></pre>
+  <div class="log" id="statusLog"></div>
+
+  <script>
+    let ws = null;
+    const outputEl = document.getElementById('output');
+    const statusLogEl = document.getElementById('statusLog');
+
+    function logStatus(msg) {
+      statusLogEl.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    }
+
+    function appendOutput(text) {
+      outputEl.textContent += text;
+    }
+
+    function clearOutput() {
+      outputEl.textContent = '';
+    }
+
+    document.getElementById('connectBtn').onclick = () => {
+      const url = document.getElementById('wsUrl').value.trim();
+      if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+        alert('请输入有效的 WebSocket URL，如：ws://127.0.0.1:8000/ws/chat');
+        return;
+      }
+      ws = new WebSocket(url);
+      clearOutput();
+      logStatus('正在连接...');
+      ws.onopen = () => {
+        logStatus('✅ 已连接');
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('closeBtn').disabled = false;
+      };
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.event === 'start') {
+            appendOutput(`【使用模型：${data.model}】\n`);
+          } else if (data.event === 'delta') {
+            appendOutput(data.data);
+          } else if (data.event === 'done') {
+            appendOutput("\n\n✅ 回答结束。\n");
+          } else if (data.event === 'error') {
+            appendOutput(`\n❌ 错误：${data.message}\n`);
+          } else {
+            appendOutput(`\nℹ️ ${JSON.stringify(data)}\n`);
+          }
+        } catch (e) {
+          appendOutput(`\n📦 ${event.data}\n`);
+        }
+      };
+      ws.onerror = (err) => {
+        logStatus('❌ 连接出错');
+        console.error('WebSocket error:', err);
+      };
+      ws.onclose = () => {
+        logStatus('🔌 连接已关闭');
+        document.getElementById('sendBtn').disabled = true;
+        document.getElementById('closeBtn').disabled = true;
+      };
+    };
+
+    document.getElementById('sendBtn').onclick = () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert('请先连接！');
+        return;
+      }
+      const prompt = document.getElementById('prompt').value.trim();
+      if (!prompt) {
+        alert('请输入提示词');
+        return;
+      }
+      const model = document.getElementById('model').value.trim() || 'qwen-turbo';
+      const temperatureStr = document.getElementById('temperature').value.trim();
+      const payload = { prompt, model };
+      if (temperatureStr) payload.temperature = Number(temperatureStr);
+
+      ws.send(JSON.stringify(payload));
+      clearOutput();
+      appendOutput("🧑‍💻：" + prompt + "\n\n🤖：");
+    };
+
+    document.getElementById('closeBtn').onclick = () => {
+      if (ws) {
+        ws.close(1000, "用户手动断开");
+      }
+    };
+  </script>
+</body>
+</html>

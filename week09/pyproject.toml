@@ -1,0 +1,28 @@
+[project]
+name = "week09"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp",
+    "asyncpg",
+    "fastapi",
+    "faiss-cpu",
+    "httpx",
+    "langchain",
+    "langchain-community",
+    "langchain-core",
+    "langgraph",
+    "numpy",
+    "openai",
+    "psutil",
+    "pydantic",
+    "pydantic-settings",
+    "pytest",
+    "redis",
+    "requests",
+    "sqlalchemy",
+    "starlette",
+    "uvicorn",
+]
