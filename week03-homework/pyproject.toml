@@ -5,6 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-	"python-dotenv",
-	# add your dependencies here and run `uv sync` to install them
+    "python-dotenv",
+    "llama-index",
+    "llama-index-core",
+    "llama-index-llms-openai-like",
+    "llama-index-llms-dashscope",
+    "llama-index-embeddings-dashscope",
+    "paddlepaddle<=2.6",
+    "paddleocr<3.0",
 ]

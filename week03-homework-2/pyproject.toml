@@ -4,4 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+  "llama-index>=0.10.0",
+  "llama-index-vector-stores-milvus>=0.1.0",
+  "pymilvus>=2.4.0",
+  "fastapi>=0.110.0",
+  "uvicorn>=0.27.0",
+  "pydantic>=2.6.0",
+  "neo4j>=5.18.0",
+]
